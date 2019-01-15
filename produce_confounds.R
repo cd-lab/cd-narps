@@ -7,6 +7,7 @@ library(tidyverse)
 COI <- c("X", "Y", "Z", "RotX", "RotY", "RotZ")
   
 # load data
+setwd('./event_tsvs')
 files <- dir(pattern = "*bold_confounds.tsv")
 confounds <- tibble(SubjID = files) %>% 
   mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
