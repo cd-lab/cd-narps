@@ -20,10 +20,10 @@ Data <- tibble(SubjID = files) %>%
 lapply(Data, function(data) {sub <- unique(data$SubjID); 
                               data %>% 
                                 select(onset, duration, gain) %>%
-                                write_tsv(., paste(sub, "_gain", ".tsv", sep = ""))})
+                                write_tsv(., paste(sub, "_gain", ".tsv", sep = ""), col_names = F)})
 
 # for losses
 lapply(Data, function(data) {sub <- unique(data$SubjID); 
                               data %>% 
                                 select(onset, duration, loss) %>%
-                                write_tsv(., paste(sub, "_loss", ".tsv", sep = ""))})
+                                write_tsv(., paste(sub, "_loss", ".tsv", sep = ""), col_names = F)})
