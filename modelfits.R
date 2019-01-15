@@ -25,7 +25,7 @@ modelfits <- lapply(Data, function(data) glm(Choice ~ gain + loss, data = data, 
 # Get the coefficients
 choiceCoeffs <- as.data.frame(t(sapply(modelfits, "[[", "coefficients")))
 choiceCoeffs$ConvergenceIterations <- sapply(modelfits, function(x) {summary(x)$iter})
-choiceCoeffs$LRT <- sapply(modelfits, function(x) {1 - (summary(x)$deviance / summary(x)$null.deviance)})
+choiceCoeffs$R2 <- sapply(modelfits, function(x) {1 - (summary(x)$deviance / summary(x)$null.deviance)})
 choiceCoeffs$aic <- sapply(modelfits, function(x) {summary(x)$aic})
 choiceCoeffs$propAccept <- sapply(Data, function(data) {mean(data$Choice)})
 choiceCoeffs$SubjID <- subjList # add subject list column to join the demographics by it below
