@@ -1,9 +1,10 @@
 library(tidyverse)
+library(elasticnet)
 
 ###------- Logistic regression per subject -------
 # Load the data
 setwd('./event_tsvs')
-files <- dir(pattern = "sub*")
+files <- dir(pattern = "*events.tsv")
 Data <- data_frame(SubjID = files) %>% 
   mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
          Run = substring(SubjID, 22, 23),
