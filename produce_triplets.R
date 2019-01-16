@@ -19,10 +19,19 @@ Data <- tibble(SubjID = files) %>%
 lapply(Data, function(data) {sub <- unique(data$SubjID); 
                               data %>% 
                                 select(onset, duration, gain) %>%
+                                mutate(gain = round(scale(gain, center = T), digits = 3)) %>%
                                 write_tsv(., paste(sub, "_gain", ".tsv", sep = ""), col_names = F)})
 
 # for losses
 lapply(Data, function(data) {sub <- unique(data$SubjID); 
                               data %>% 
                                 select(onset, duration, loss) %>%
+                                mutate(loss = round(scale(loss, center = T), digits = 3)) %>%
                                 write_tsv(., paste(sub, "_loss", ".tsv", sep = ""), col_names = F)})
+
+# create a vector of 1's to modulate baseline activation
+lapply(Data, function(data) {sub <- unique(data$SubjID); 
+                              data %>% 
+                                select(onset, duration) %>%
+                                mutate(baseline = rep(1, length(onset))) %>%
+                                write_tsv(., paste(sub, "_base", ".tsv", sep = ""), col_names = F)})
