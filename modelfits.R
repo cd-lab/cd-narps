@@ -10,7 +10,9 @@ Data <- data_frame(SubjID = files) %>%
          Run = substring(SubjID, 22, 23),
          SubjID = substring(SubjID, 1, 7)) %>%
   unnest() %>%
-  mutate(response = gsub(".*_", "", participant_response),
+  mutate(gain = unlist(gain), # glmnet and enet want this to be a double
+         loss = unlist(loss),
+         response = gsub(".*_", "", participant_response),
          Choice = ifelse(response %in% "accept", 1, 0)) %>%
   filter(RT != 0,
          SubjID != "sub-048") %>%
@@ -40,7 +42,7 @@ choiceCoeffs <- choiceCoeffs[, c(8,9,10,11,7,1,2,3,4,5,6)]
 
 # simple plot
 ggplot(data = choiceCoeffs, aes(gain, loss, fill = group)) +
-  geom_point(aes(size = 1 / ConvergenceIterations), pch = 21, color = "black") + 
+  geom_point(aes(size = 1/ ConvergenceIterations), pch = 21, color = "black") + 
   geom_abline(intercept = 0, slope = -1, lty = 2) +
   geom_hline(yintercept = 0, lty = 2) +
   geom_vline(xintercept = 0, lty = 2) +
@@ -66,5 +68,26 @@ choiceCoeffs$propResponses <- sapply(Data2, function(data) {mean(data$didRespond
 par(mfrow = c(1,2))
 hist(choiceCoeffs$propResponses)
 hist(choiceCoeffs$propAccept)
+
+# elastic net
+glmnetFits <- lapply(Data, function(data) cv.glmnet(x = as.matrix(data[c("gain", "loss")]), y = as.factor(data$Choice), family = "binomial", alpha = 0))
+
+# attach the resulting lambda.min coefficients to the overall coefficients list
+temp <- lapply(glmnetFits, coef, s = "lambda.min")
+temp <- as.matrix(t(do.call(cbind, temp)))
+colnames(temp) <- c("intercept_L2", "gain_L2", "loss_L2")
+choiceCoeffs <- cbind(choiceCoeffs, temp)
+rm(temp)
+
+# plot the regularized coefficients
+ggplot(data = choiceCoeffs, aes(gain_L2, loss_L2, fill = group)) +
+  geom_point(size = 4, pch = 21, color = "black") + 
+  geom_abline(intercept = 0, slope = -1, lty = 2) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = 0, lty = 2) +
+  labs(title = "L2-regularized logistic regression betas for gain and losses per participant") +
+  theme_classic()
+
+
 
 
