@@ -1,5 +1,5 @@
 library(tidyverse)
-library(elasticnet)
+library(glmnet)
 
 ###------- Logistic regression per subject -------
 # Load the data
