@@ -7,7 +7,20 @@ library(tidyverse)
 fwdThresh <- 0.5
 
 # confounds of interest (COI)
-COI <- c("X", "Y", "Z", "RotX", "RotY", "RotZ", "GlobalSignal", "FramewiseDisplacement")
+COI <- c("X", 
+         "Y",
+         "Z", 
+         "RotX", 
+         "RotY", 
+         "RotZ", 
+         "GlobalSignal", 
+         "FramewiseDisplacement", 
+         "aCompCor00", 
+         "aCompCor01", 
+         "aCompCor02", 
+         "aCompCor03", 
+         "aCompCor04", 
+         "aCompCor05")
   
 # load data and identify noisy participants
 setwd('./event_tsvs/confounds/')

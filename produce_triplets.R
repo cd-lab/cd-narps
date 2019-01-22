@@ -46,3 +46,10 @@ lapply(Data, function(data) {sub <- unique(data$SubjID);
                                 mutate(noResp = ifelse(response == "NoResp", 1, 0)) %>%
                                 select(onset, duration, noResp) %>%
                                 write_tsv(., paste(sub, "_noResponse", ".tsv", sep = ""), col_names = F)})
+
+# for RTs
+lapply(Data, function(data) {sub <- unique(data$SubjID); 
+                              data %>% 
+                                select(onset, duration, RT) %>%
+                                mutate(loss = round(scale(RT, center = T), digits = 3)) %>%
+                                write_tsv(., paste(sub, "_RT", ".tsv", sep = ""), col_names = F)})
