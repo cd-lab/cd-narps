@@ -51,5 +51,5 @@ lapply(Data, function(data) {sub <- unique(data$SubjID);
 lapply(Data, function(data) {sub <- unique(data$SubjID); 
                               data %>% 
                                 select(onset, duration, RT) %>%
-                                mutate(loss = round(scale(RT, center = T), digits = 3)) %>%
+                                mutate(RT = round(scale(RT, center = T), digits = 3)) %>%
                                 write_tsv(., paste(sub, "_RT", ".tsv", sep = ""), col_names = F)})
