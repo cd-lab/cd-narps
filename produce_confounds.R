@@ -3,33 +3,38 @@
 
 library(tidyverse)
 
-# setupds
+# setups
 fwdThresh <- 0.5
 
 # confounds of interest (COI)
 COI <- c("X", "Y", "Z", "RotX", "RotY", "RotZ", "GlobalSignal", "FramewiseDisplacement")
   
-# load data
-setwd('./event_tsvs')
+# load data and identify noisy participants
+setwd('./event_tsvs/confounds/')
 files <- dir(pattern = "*bold_confounds.tsv")
-confounds <- tibble(SubjID = files) %>% 
-  mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
-         Run = substring(SubjID, 22, 23),
-         SubjID = substring(SubjID, 1, 7)) %>%
-  unnest() %>%
-  filter(SubjID != "sub-048") %>%
-  plyr::dlply("SubjID", identity)
-
-toremove <- tibble(SubjID = files) %>% 
+toRemove <- tibble(SubjID = files) %>% 
   mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
          Run = substring(SubjID, 22, 23),
          SubjID = substring(SubjID, 1, 7)) %>%
   unnest() %>%
   group_by(SubjID) %>% 
   summarize(prcntFWD = mean(FramewiseDisplacement > fwdThresh)) %>%
-  filter(prcntFWD > 0.05)
+  filter(prcntFWD > 0.05) %>%
+  rbind(c("sub-048", NA)) # append sub 48, since it has missing data
 
-# write tsvs for each confound
+# write to csv for further reference
+write_csv(toRemove, "removedsubs.csv")
+
+# load data and filter out noisy participants
+confounds <- tibble(SubjID = files) %>% 
+  mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
+         Run = substring(SubjID, 22, 23),
+         SubjID = substring(SubjID, 1, 7)) %>%
+  unnest() %>%
+  filter(!(SubjID %in% toRemove$SubjID)) %>% 
+  plyr::dlply("SubjID", identity)
+
+# write tsvs for each confound for each surviving participant
 lapply(confounds, function(data) {
   lapply(COI, function(coi) {
     sub <- unique(data$SubjID);

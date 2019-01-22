@@ -2,6 +2,10 @@
 
 library(tidyverse)
 
+# read the file with the noisy participants, so they are exluded
+# note that the error produced by the lack of this file is on purpose. Run confounds script before this one.
+toRemove <- read_csv('./event_tsvs/confounds/removedsubs.csv')
+
 # Load the data
 setwd('./event_tsvs')
 files <- dir(pattern = "*events.tsv")
@@ -12,7 +16,7 @@ Data <- tibble(SubjID = files) %>%
   unnest() %>%
   mutate(response = gsub(".*_", "", participant_response),
          Choice = ifelse(response %in% "accept", 1, 0)) %>%
-  filter(SubjID != "sub-048") %>%
+  filter(!(SubjID %in% toRemove$SubjID)) %>%
   plyr::dlply("SubjID", identity)
 
 # for gains
@@ -35,3 +39,10 @@ lapply(Data, function(data) {sub <- unique(data$SubjID);
                                 select(onset, duration) %>%
                                 mutate(baseline = rep(1, length(onset))) %>%
                                 write_tsv(., paste(sub, "_base", ".tsv", sep = ""), col_names = F)})
+
+# vector including all missed responses
+lapply(Data, function(data) {sub <- unique(data$SubjID); 
+                              data %>% 
+                                mutate(noResp = ifelse(response == "NoResp", 1, 0)) %>%
+                                select(onset, duration, noResp) %>%
+                                write_tsv(., paste(sub, "_noResponse", ".tsv", sep = ""), col_names = F)})
