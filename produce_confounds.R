@@ -5,6 +5,8 @@ library(tidyverse)
 
 # setups
 fwdThresh <- 0.5
+FSL <- FALSE
+AFNI <- TRUE
 
 # confounds of interest (COI)
 COI <- c("X", 
@@ -48,28 +50,62 @@ confounds <- tibble(SubjID = files) %>%
   plyr::dlply("SubjID", identity)
 
 # write tsvs for each confound for each surviving participant
-lapply(confounds, function(data) {
-  lapply(COI, function(coi) {
-    sub <- unique(data$SubjID);
-    if (coi == "FramewiseDisplacement") { # individual vectors produced for larger FWDs, so variance is captured individually
-      nDisplacements <- which(data[coi] > fwdThresh);
-      for (i in nDisplacements) {
-        if (i > 1) { # fwd adds n/a to the first volume, which gets caught in nDispl. So always skip it
-          vec <- rep(0, nrow(data));
-          vec[c(i-1, i, i+1)] <- 1;
-          vec[1] <- 0; # otherwise it's na
-          write.table(vec, 
-                      file = paste(sub, "_", coi, "_", i, ".tsv", sep = ""), 
-                      quote=FALSE, 
-                      sep='\t', 
-                      col.names = F,
-                      row.names = F)
+
+# for FSL
+if (FSL) {
+  lapply(confounds, function(data) {
+    lapply(COI, function(coi) {
+      sub <- unique(data$SubjID);
+      if (coi == "FramewiseDisplacement") { # individual vectors produced for larger FWDs, so variance is captured individually
+        nDisplacements <- which(data[coi] > fwdThresh);
+        for (i in nDisplacements) {
+          if (i > 1) { # fwd adds n/a to the first volume, which gets caught in nDispl. So always skip it
+            vec <- rep(0, nrow(data));
+            vec[c(i-1, i, i+1)] <- 1;
+            vec[1] <- 0; # otherwise it's na
+            write.table(vec, 
+                        file = paste(sub, "_", coi, "_", i, ".tsv", sep = ""), 
+                        quote=FALSE, 
+                        sep='\t', 
+                        col.names = F,
+                        row.names = F)
+          }
         }
+      } else {
+        write_tsv(data[coi], paste(sub, "_", coi, ".tsv", sep = ""), col_names = F)
       }
-    } else {
-      write_tsv(data[coi], paste(sub, "_", coi, ".tsv", sep = ""), col_names = F)
+  })})
+}
+
+# for AFNI
+if (AFNI) {
+  for (data in confounds) {
+    sub <- unique(data$SubjID)
+    tdata <- data %>% select(COI, -FramewiseDisplacement)
+    if ("FramewiseDisplacement" %in% COI) {
+      nDisp <- which(data["FramewiseDisplacement"] > fwdThresh)
+      for (i in nDisp[-1]) {
+        vec <- rep(0, nrow(data))
+        vec[c(i-1, i, i+1)] <- 1
+        tdata <- cbind(tdata, vec)
+        colnames(tdata)[ncol(tdata)] <- paste("FWD", i, sep = "")
+      }
     }
-})})
+    write_tsv(tdata, paste(sub, "_AFNI_confounds.tsv", sep = ""), col_names = T)
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
