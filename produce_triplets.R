@@ -62,6 +62,7 @@ if (FSL) {
 }
 
 # for AFNI
+# afni automatically adds an intercept vector, so there is no need to create one
 if (AFNI) {
   # for gains
   lapply(Data, function(data) {sub <- unique(data$SubjID); 
