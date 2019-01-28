@@ -7,6 +7,9 @@ setwd('./event_tsvs')
 
 # Load demographics
 demographics <- read_tsv('participants.tsv', col_names = c("SubjID", "group", "gender", "age"), col_types = cols())
+subjList <- demographics$SubjID
+nSubjs_EI <- count(demographics, group) %>% filter(group == "equalIndifference") %>% .$n
+nSubjs_ER <- count(demographics, group) %>% filter(group == "equalRange") %>% .$n
 
 # Load the data
 files <- dir(pattern = "*events.tsv")
@@ -23,11 +26,6 @@ Data <- data_frame(SubjID = files) %>%
          SubjID != "sub-048") %>%
   left_join(demographics) %>%
   plyr::dlply("SubjID", identity)
-
-# Get just the subject list and number of subjects
-subjList <- unique(unlist(sapply(Data, "[[", "SubjID")))
-nSubjs_EI <- count(demographics, group) %>% filter(group == "equalIndifference") %>%.$n
-nSubjs_ER <- count(demographics, group) %>% filter(group == "equalRange") %>%.$n
 
 # Perform a model fit
 modelfits <- lapply(Data, function(data) glm(Choice ~ gain + loss, data = data, family = "binomial"))
@@ -96,6 +94,7 @@ ggplot(data = choiceCoeffs, aes(gain_L2, loss_L2, fill = group)) +
 
 
 ###-------- Replicating the RT and proportion heatmaps ------
+par(mfrow=c(2,2))
 # first for RT
 # equal indifference
 RT_EI_mat <- matrix(0, ncol = 20, nrow = 40)
@@ -114,7 +113,8 @@ dimnames(RT_EI_mat) <- list(seq(10,40, by = 2), seq(5,20))
 corrplot(RT_EI_mat,
          is.corr = F,
          method = "color",
-         outline = T)
+         outline = T,
+         tl.col = "black")
 
 
 # equal range
@@ -134,7 +134,8 @@ dimnames(RT_ER_mat) <- list(seq(5,20), seq(5,20))
 corrplot(RT_ER_mat,
          is.corr = F,
          method = "color",
-         outline = T)
+         outline = T,
+         tl.col = "black")
 
 
 # and now for proportions
@@ -155,7 +156,8 @@ dimnames(prop_EI_mat) <- list(seq(10,40, by = 2), seq(5,20))
 corrplot(prop_EI_mat,
          is.corr = F,
          method = "color",
-         outline = T)
+         outline = T,
+         tl.col = "black")
 
 
 # equal range
@@ -175,7 +177,8 @@ dimnames(prop_ER_mat) <- list(seq(5,20), seq(5,20))
 corrplot(prop_ER_mat,
          is.corr = F,
          method = "color",
-         outline = T)
+         outline = T,
+         tl.col = "black")
 
 
 
