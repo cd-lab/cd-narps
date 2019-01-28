@@ -2,8 +2,13 @@ library(tidyverse)
 library(glmnet)
 
 ###------- Logistic regression per subject -------
-# Load the data
+
 setwd('./event_tsvs')
+
+# Load demographics
+demographics <- read_tsv('participants.tsv', col_names = c("SubjID", "group", "gender", "age"), col_types = cols())
+
+# Load the data
 files <- dir(pattern = "*events.tsv")
 Data <- data_frame(SubjID = files) %>% 
   mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
@@ -16,11 +21,13 @@ Data <- data_frame(SubjID = files) %>%
          Choice = ifelse(response %in% "accept", 1, 0)) %>%
   filter(RT != 0,
          SubjID != "sub-048") %>%
+  left_join(demographics) %>%
   plyr::dlply("SubjID", identity)
 
 # Get just the subject list and number of subjects
 subjList <- unique(unlist(sapply(Data, "[[", "SubjID")))
-nSubjs <- length(subjList)
+nSubjs_EI <- count(demographics, group) %>% filter(group == "equalIndifference") %>%.$n
+nSubjs_ER <- count(demographics, group) %>% filter(group == "equalRange") %>%.$n
 
 # Perform a model fit
 modelfits <- lapply(Data, function(data) glm(Choice ~ gain + loss, data = data, family = "binomial"))
@@ -34,7 +41,6 @@ choiceCoeffs$propAccept <- sapply(Data, function(data) {mean(data$Choice)})
 choiceCoeffs$SubjID <- subjList # add subject list column to join the demographics by it below
 
 # Let's attach participant demographics to the coefficient list
-demographics <- read_tsv('participants.tsv', col_names = c("SubjID", "group", "gender", "age"), col_types = cols())
 choiceCoeffs <- left_join(choiceCoeffs, demographics, by = "SubjID")
 
 # Reorder columns so that Subject ID comes first
@@ -87,6 +93,99 @@ ggplot(data = choiceCoeffs, aes(gain_L2, loss_L2, fill = group)) +
   geom_vline(xintercept = 0, lty = 2) +
   labs(title = "L2-regularized logistic regression betas for gain and losses per participant") +
   theme_classic()
+
+
+###-------- Replicating the RT and proportion heatmaps ------
+# first for RT
+# equal indifference
+RT_EI_mat <- matrix(0, ncol = 20, nrow = 40)
+
+for (sub in Data) {
+  if ("equalIndifference" %in% sub$group) {
+    for (trial in seq(nrow(sub))) {
+      RT_EI_mat[sub[trial, 5], sub[trial, 6]] <- RT_EI_mat[sub[trial, 5], sub[trial, 6]] + sub$RT[trial]
+    }
+  }
+}
+
+RT_EI_mat <- RT_EI_mat[seq(10,40, by = 2), 5:20] / nSubjs_EI
+dimnames(RT_EI_mat) <- list(seq(10,40, by = 2), seq(5,20))
+
+corrplot(RT_EI_mat,
+         is.corr = F,
+         method = "color",
+         outline = T)
+
+
+# equal range
+RT_ER_mat <- matrix(0, ncol = 20, nrow = 20)
+
+for (sub in Data) {
+  if ("equalRange" %in% sub$group) {
+    for (trial in seq(nrow(sub))) {
+      RT_ER_mat[sub[trial, 5], sub[trial, 6]] <- RT_ER_mat[sub[trial, 5], sub[trial, 6]] + sub$RT[trial]
+    }
+  }
+}
+
+RT_ER_mat <- RT_ER_mat[seq(5,20), seq(5,20)] / nSubjs_ER
+dimnames(RT_ER_mat) <- list(seq(5,20), seq(5,20))
+
+corrplot(RT_ER_mat,
+         is.corr = F,
+         method = "color",
+         outline = T)
+
+
+# and now for proportions
+# equal indifference
+prop_EI_mat <- matrix(0, ncol = 20, nrow = 40)
+
+for (sub in Data) {
+  if ("equalIndifference" %in% sub$group) {
+    for (trial in seq(nrow(sub))) {
+      prop_EI_mat[sub[trial, 5], sub[trial, 6]] <- prop_EI_mat[sub[trial, 5], sub[trial, 6]] + sub$Choice[trial]
+    }
+  }
+}
+
+prop_EI_mat <- prop_EI_mat[seq(10,40, by = 2), 5:20] / nSubjs_EI
+dimnames(prop_EI_mat) <- list(seq(10,40, by = 2), seq(5,20))
+
+corrplot(prop_EI_mat,
+         is.corr = F,
+         method = "color",
+         outline = T)
+
+
+# equal range
+prop_ER_mat <- matrix(0, ncol = 20, nrow = 20)
+
+for (sub in Data) {
+  if ("equalRange" %in% sub$group) {
+    for (trial in seq(nrow(sub))) {
+      prop_ER_mat[sub[trial, 5], sub[trial, 6]] <- prop_ER_mat[sub[trial, 5], sub[trial, 6]] + sub$Choice[trial]
+    }
+  }
+}
+
+prop_ER_mat <- prop_ER_mat[seq(5,20), seq(5,20)] / nSubjs_ER
+dimnames(prop_ER_mat) <- list(seq(5,20), seq(5,20))
+
+corrplot(prop_ER_mat,
+         is.corr = F,
+         method = "color",
+         outline = T)
+
+
+
+
+
+
+
+
+
+
 
 
 
