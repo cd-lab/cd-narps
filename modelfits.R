@@ -182,8 +182,53 @@ corrplot(prop_ER_mat,
 
 
 
+###-------- Indifference heatmaps ------
+par(mfrow=c(1,2))
+t1 <- do.call(rbind, Data) %>%
+  filter(RT != 0) %>%
+  left_join(choiceCoeffs[c('SubjID', 'intercept_L2', 'gain_L2', 'loss_L2')]) %>%
+  mutate(probFit = exp(intercept_L2 + gain_L2*gain + loss_L2*loss) / (1 + exp(intercept_L2 + gain_L2*gain + loss_L2*loss))) %>%
+  group_by(SubjID) %>%
+  filter(probFit > 0.49 & probFit < 0.51)
+
+prop_EI_mat <- matrix(0, ncol = 20, nrow = 40)
+
+for (row in seq(nrow(t1))) {
+  if (t1$group[row] == "equalIndifference") {
+    gain <- as.numeric(t1[row, 5])
+    loss <- as.numeric(t1[row, 6])
+    prop_EI_mat[gain, loss] <- prop_EI_mat[gain, loss] + 1
+  }
+}
+
+prop_EI_mat <- prop_EI_mat[seq(10,40, by = 2), 5:20] 
+dimnames(prop_EI_mat) <- list(seq(10,40, by = 2), seq(5,20))
+
+corrplot(prop_EI_mat,
+         is.corr = F,
+         method = "color",
+         outline = T,
+         tl.col = "black")
 
 
+prop_ER_mat <- matrix(0, ncol = 20, nrow = 20)
+
+for (row in seq(nrow(t1))) {
+  if (t1$group[row] == "equalRange") {
+    gain <- as.numeric(t1[row, 5])
+    loss <- as.numeric(t1[row, 6])
+    prop_ER_mat[gain, loss] <- prop_ER_mat[gain, loss] + 1
+  }
+}
+
+prop_ER_mat <- prop_ER_mat[seq(5,20), seq(5,20)] 
+dimnames(prop_ER_mat) <- list(seq(5,20), seq(5,20))
+
+corrplot(prop_ER_mat,
+         is.corr = F,
+         method = "color",
+         outline = T,
+         tl.col = "black")
 
 
 
