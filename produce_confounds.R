@@ -15,7 +15,7 @@ COI <- c("X",
          "RotX", 
          "RotY", 
          "RotZ", 
-         "GlobalSignal", 
+         #"GlobalSignal", 
          "FramewiseDisplacement", 
          "aCompCor00", 
          "aCompCor01", 
@@ -91,7 +91,7 @@ if (AFNI) {
         colnames(tdata)[ncol(tdata)] <- paste("FWD", i, sep = "")
       }
     }
-    write_tsv(tdata, paste(sub, "_AFNI_confounds.tsv", sep = ""), col_names = T)
+    write_tsv(tdata, paste(sub, "_AFNI_confounds.tsv", sep = ""), col_names = F)
   }
 }
 

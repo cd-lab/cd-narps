@@ -87,6 +87,7 @@ if (AFNI) {
                                   write_tsv(., paste(sub, "_loss", "_AFNI.tsv", sep = ""), col_names = F)})
   
   # vector including all missed responses
+  # these can just be limited to the trials that showed no response + their onsets. Not a full vector. 
   lapply(Data, function(data) {sub <- unique(data$SubjID); 
                                 data %>% 
                                   mutate(noResp = ifelse(response == "NoResp", 1, 0),
