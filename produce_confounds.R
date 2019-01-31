@@ -6,7 +6,8 @@ library(tidyverse)
 # setups
 fwdThresh <- 0.5
 FSL <- FALSE
-AFNI <- TRUE
+AFNI <- T
+spread <- T
 
 # confounds of interest (COI)
 COI <- c("X", 
@@ -92,6 +93,36 @@ if (AFNI) {
       }
     }
     write_tsv(tdata, paste(sub, "_AFNI_confounds.tsv", sep = ""), col_names = F)
+  }
+}
+
+# for AFNI with run-specific columns (as of 1/31/19)
+if (AFNI & spread) {
+  # function to generate the spread per variable
+  sepRuns <- function(data, run) {
+    data_frame(run, data) %>% 
+      mutate(i = row_number()) %>%
+      spread(run, data) %>%
+      select(-i) %>%
+      replace(., is.na(.), 0)
+  }
+  
+  # iterate through subjects
+  for (data in confounds) {
+    sub <- unique(data$SubjID)
+    run <- data$Run
+    tdata <- data %>% select(COI, -FramewiseDisplacement)
+    if ("FramewiseDisplacement" %in% COI) {
+      nDisp <- which(data["FramewiseDisplacement"] > fwdThresh)
+      for (i in nDisp[-1]) {
+        vec <- rep(0, nrow(data))
+        vec[c(i-1, i, i+1)] <- 1
+        tdata <- cbind(tdata, vec)
+        colnames(tdata)[ncol(tdata)] <- paste("FWD", i, sep = "")
+      }
+    }
+    final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
+    write_tsv(final, paste(sub, "_AFNI_confounds_spread.tsv", sep = ""), col_names = F)
   }
 }
 
