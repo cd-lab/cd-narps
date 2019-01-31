@@ -2,6 +2,9 @@
 
 library(tidyverse)
 
+# to do
+# not only remove RT == 0 from gain, loss, etc., but create a new file with the removed trials (see 3dconvolve for afni)
+
 # which file types to produce?
 FSL <- FALSE
 AFNI <- TRUE
@@ -20,7 +23,7 @@ Data <- tibble(SubjID = files) %>%
   unnest() %>%
   mutate(response = gsub(".*_", "", participant_response),
          Choice = ifelse(response %in% "accept", 1, 0)) %>%
-  filter(!(SubjID %in% toRemove$SubjID)) %>%
+  filter(!(SubjID %in% toRemove$SubjID), !(RT < 0.2)) %>% # as of 1/31/19, remove all non-response trials
   plyr::dlply("SubjID", identity)
 
 # FSL style
@@ -67,24 +70,34 @@ if (AFNI) {
   # for gains
   lapply(Data, function(data) {sub <- unique(data$SubjID); 
                                 data %>% 
-                                  mutate(gain = round(scale(gain, center = T), digits = 3),
+                                  mutate(gain = round(scale(gain, center = T, scale = F), digits = 3),
                                          towrite = paste(onset,"*", gain, sep = "")) %>%
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
-                                  t() %>% 
-                                  as.data.frame() %>%
-                                  write_tsv(., paste(sub, "_gain", "_AFNI.tsv", sep = ""), col_names = F)})
+                                  lapply(., function(x) write.table(t(noquote(x)), 
+                                                                    paste(sub, "_gain", "_AFNI.tsv", sep = ""), 
+                                                                    append = T, 
+                                                                    sep = '\t',
+                                                                    col.names = F,
+                                                                    row.names = F,
+                                                                    quote = F))})
   
   # for losses
   lapply(Data, function(data) {sub <- unique(data$SubjID); 
                                 data %>% 
-                                  mutate(loss = round(scale(loss, center = T), digits = 3),
+                                  mutate(loss = round(scale(loss, center = T, scale = F), digits = 3),
                                          towrite = paste(onset,"*", loss, sep = "")) %>%
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
                                   t() %>% 
                                   as.data.frame() %>%
-                                  write_tsv(., paste(sub, "_loss", "_AFNI.tsv", sep = ""), col_names = F)})
+                                  lapply(., function(x) write.table(t(noquote(x)), 
+                                                                    paste(sub, "_loss", "_AFNI.tsv", sep = ""), 
+                                                                    append = T, 
+                                                                    sep = '\t',
+                                                                    col.names = F,
+                                                                    row.names = F,
+                                                                    quote = F))})
   
   # vector including all missed responses
   # these can just be limited to the trials that showed no response + their onsets. Not a full vector. 
@@ -101,13 +114,19 @@ if (AFNI) {
   # for RTs
   lapply(Data, function(data) {sub <- unique(data$SubjID); 
                                 data %>% 
-                                  mutate(RT = round(scale(RT, center = T), digits = 3),
+                                  mutate(RT = round(scale(RT, center = T, scale = F), digits = 3),
                                          towrite = paste(onset,"*", RT, sep = "")) %>%
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
                                   t() %>% 
                                   as.data.frame() %>%
-                                  write_tsv(., paste(sub, "_RT", "_AFNI.tsv", sep = ""), col_names = F)})
+                                  lapply(., function(x) write.table(t(noquote(x)), 
+                                                                    paste(sub, "_RT", "_AFNI.tsv", sep = ""), 
+                                                                    append = T, 
+                                                                    sep = '\t',
+                                                                    col.names = F,
+                                                                    row.names = F,
+                                                                    quote = F))})
 }
 
 
