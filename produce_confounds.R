@@ -115,12 +115,14 @@ if (AFNI & spread) {
     tdata <- data %>% select(COI, -FramewiseDisplacement)
     final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
     if ("FramewiseDisplacement" %in% COI) {
-      nDisp <- which(data["FramewiseDisplacement"] > fwdThresh)
-      for (i in nDisp[-1]) {
-        vec <- rep(0, nrow(data))
-        vec[c(i-1, i, i+1)] <- 1
-        final <- cbind(final, vec)
-        colnames(final)[ncol(final)] <- paste("FWD", i, sep = "")
+      nDisp <- which((data["FramewiseDisplacement"] > fwdThresh) & (data["FramewiseDisplacement"] != "n/a"))
+      if (length(nDisp) > 0) {
+        for (i in nDisp) {
+          vec <- rep(0, nrow(data))
+          vec[c(i-1, i, i+1)] <- 1
+          final <- cbind(final, vec)
+          colnames(final)[ncol(final)] <- paste("FWD", i, sep = "")
+        }
       }
     }
     #final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
