@@ -4,7 +4,10 @@
 # conversion: FWHM = sigma * 2 * sqrt(2 * log(2))
 # 3mm FWHM corresponds to a sigma of 1.274
 
-ID=001
+# load modules within SCC
+module load fsl
+
+ID=$1
 
 for RUN in 01 02 03 04 ; do
 
