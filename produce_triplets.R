@@ -87,7 +87,7 @@ if (AFNI) {
                                          towrite = paste(onset,"*", gain, sep = "")) %>%
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
-                                  lapply(., function(x) write.table(t(noquote(x)), 
+                                  lapply(., function(x) write.table(t(x), 
                                                                     paste(sub, "_gain_AFNI.tsv", sep = ""), 
                                                                     append = T, 
                                                                     sep = '\t',
@@ -102,7 +102,7 @@ if (AFNI) {
                                          towrite = paste(onset,"*", loss, sep = "")) %>%
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
-                                  lapply(., function(x) write.table(t(noquote(x)), 
+                                  lapply(., function(x) write.table(t(x), 
                                                                     paste(sub, "_loss_AFNI.tsv", sep = ""), 
                                                                     append = T, 
                                                                     sep = '\t',
@@ -118,7 +118,7 @@ if (AFNI) {
            towrite = paste(onset,"*", RT, sep = "")) %>%
     select(Run, towrite) %>%
     unstack(towrite~Run) %>% 
-    lapply(., function(x) write.table(t(noquote(x)), 
+    lapply(., function(x) write.table(t(x), 
                                       paste(sub, "_RT_AFNI.tsv", sep = ""), 
                                       append = T, 
                                       sep = '\t',
