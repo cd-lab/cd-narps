@@ -140,7 +140,8 @@ if (AFNI) {
                                   select(Run, onset) %>%
                                   right_join(tibble(Run = c("01", "02", "03", "04"))) %>%
                                   replace(., is.na(.), "*") %>%
-                                  unstack(onset~Run) %>%
+                                  unstack(onset~Run) %>% 
+                                  {if (length(.) == 1) t(.) else .} %>%
                                   lapply(., function(x) write.table(t(x), 
                                                                     paste(sub, "_noResponse_AFNI.tsv", sep = ""), 
                                                                     append = T, 
