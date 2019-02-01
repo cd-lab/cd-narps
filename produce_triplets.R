@@ -11,7 +11,7 @@ AFNI <- TRUE
 
 # read the file with the noisy participants, so they are exluded
 # note that the error produced by the lack of this file is on purpose. Run confounds script before this one.
-toRemove <- read_csv('./event_tsvs/confounds/removedsubs.csv')
+toRemove <- read_csv('removedsubs.csv')
 
 # Load the data
 setwd('./event_tsvs')

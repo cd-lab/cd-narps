@@ -1,5 +1,6 @@
 library(tidyverse)
 library(glmnet)
+library(corrplot)
 
 ###------- Logistic regression per subject -------
 
@@ -7,9 +8,9 @@ setwd('./event_tsvs')
 
 # Load demographics
 demographics <- read_tsv('participants.tsv', col_names = c("SubjID", "group", "gender", "age"), col_types = cols())
-subjList <- demographics$SubjID
-nSubjs_EI <- count(demographics, group) %>% filter(group == "equalIndifference") %>% .$n
-nSubjs_ER <- count(demographics, group) %>% filter(group == "equalRange") %>% .$n
+
+# ps to remove
+toRemove <- read_csv('../removedsubs.csv')
 
 # Load the data
 files <- dir(pattern = "*events.tsv")
@@ -23,9 +24,12 @@ Data <- data_frame(SubjID = files) %>%
          response = gsub(".*_", "", participant_response),
          Choice = ifelse(response %in% "accept", 1, 0)) %>%
   filter(RT != 0,
-         SubjID != "sub-048") %>%
+         !(SubjID %in% toRemove$SubjID)) %>%
   left_join(demographics) %>%
   plyr::dlply("SubjID", identity)
+
+# get a subject list
+subjList <- unique(do.call(rbind, Data)$SubjID)
 
 # Perform a model fit
 modelfits <- lapply(Data, function(data) glm(Choice ~ gain + loss, data = data, family = "binomial"))
@@ -39,7 +43,10 @@ choiceCoeffs$propAccept <- sapply(Data, function(data) {mean(data$Choice)})
 choiceCoeffs$SubjID <- subjList # add subject list column to join the demographics by it below
 
 # Let's attach participant demographics to the coefficient list
+# and then get the final counts for each group
 choiceCoeffs <- left_join(choiceCoeffs, demographics, by = "SubjID")
+nSubjs_EI <- count(choiceCoeffs, group) %>% filter(group == "equalIndifference") %>% .$n
+nSubjs_ER <- count(choiceCoeffs, group) %>% filter(group == "equalRange") %>% .$n
 
 # Reorder columns so that Subject ID comes first
 choiceCoeffs <- choiceCoeffs[, c(8,9,10,11,7,1,2,3,4,5,6)]
@@ -62,7 +69,7 @@ Data2 <- data_frame(SubjID = files) %>%
          SubjID = substring(SubjID, 1, 7)) %>%
     unnest() %>%
     mutate(didRespond = ifelse(RT == 0, 0, 1)) %>%
-    filter(SubjID != "sub-048") %>%
+    filter(!(SubjID %in% toRemove$SubjID)) %>%
     plyr::dlply("SubjID", identity)
 
 # Store the subject-id and proportion of responses

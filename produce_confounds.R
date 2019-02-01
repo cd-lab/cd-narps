@@ -36,10 +36,11 @@ toRemove <- tibble(SubjID = files) %>%
   group_by(SubjID) %>% 
   summarize(prcntFWD = mean(FramewiseDisplacement > fwdThresh)) %>%
   filter(prcntFWD > 0.05) %>%
-  rbind(c("sub-048", NA)) # append sub 48, since it has missing data
+  rbind(c("sub-048", NA)) %>% # append sub 48, since it has missing data
+  rbind(c("sub-056", NA)) # and 56 for having weird gain-loss coefficients
 
 # write to csv for further reference
-write_csv(toRemove, "removedsubs.csv")
+# write_csv(toRemove, "removedsubs.csv")
 
 # load data and filter out noisy participants
 confounds <- tibble(SubjID = files) %>% 
