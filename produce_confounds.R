@@ -113,16 +113,17 @@ if (AFNI & spread) {
     sub <- unique(data$SubjID)
     run <- data$Run
     tdata <- data %>% select(COI, -FramewiseDisplacement)
+    final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
     if ("FramewiseDisplacement" %in% COI) {
       nDisp <- which(data["FramewiseDisplacement"] > fwdThresh)
       for (i in nDisp[-1]) {
         vec <- rep(0, nrow(data))
         vec[c(i-1, i, i+1)] <- 1
-        tdata <- cbind(tdata, vec)
-        colnames(tdata)[ncol(tdata)] <- paste("FWD", i, sep = "")
+        final <- cbind(final, vec)
+        colnames(final)[ncol(final)] <- paste("FWD", i, sep = "")
       }
     }
-    final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
+    #final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
     write_tsv(final, paste(sub, "_AFNI_confounds_spread.tsv", sep = ""), col_names = F)
   }
 }
