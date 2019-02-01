@@ -26,6 +26,19 @@ Data <- tibble(SubjID = files) %>%
   filter(!(SubjID %in% toRemove$SubjID), !(RT < 0.2)) %>% # as of 1/31/19, remove all non-response trials
   plyr::dlply("SubjID", identity)
 
+
+# for the non-response and RT < 0.2mess
+Data2 <- tibble(SubjID = files) %>%
+  mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
+         Run = substring(SubjID, 22, 23),
+         SubjID = substring(SubjID, 1, 7)) %>%
+  unnest() %>%
+  mutate(response = gsub(".*_", "", participant_response),
+         Choice = ifelse(response %in% "accept", 1, 0)) %>%
+  filter(!(SubjID %in% toRemove$SubjID), RT < 0.2) %>% # as of 1/31/19, remove all non-response trials
+  plyr::dlply("SubjID", identity)
+
+
 # FSL style
 if (FSL) {
   # for gains
@@ -75,7 +88,7 @@ if (AFNI) {
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
                                   lapply(., function(x) write.table(t(noquote(x)), 
-                                                                    paste(sub, "_gain", "_AFNI.tsv", sep = ""), 
+                                                                    paste(sub, "_gain_AFNI.tsv", sep = ""), 
                                                                     append = T, 
                                                                     sep = '\t',
                                                                     col.names = F,
@@ -89,44 +102,63 @@ if (AFNI) {
                                          towrite = paste(onset,"*", loss, sep = "")) %>%
                                   select(Run, towrite) %>%
                                   unstack(towrite~Run) %>% 
-                                  t() %>% 
-                                  as.data.frame() %>%
                                   lapply(., function(x) write.table(t(noquote(x)), 
-                                                                    paste(sub, "_loss", "_AFNI.tsv", sep = ""), 
+                                                                    paste(sub, "_loss_AFNI.tsv", sep = ""), 
                                                                     append = T, 
                                                                     sep = '\t',
                                                                     col.names = F,
                                                                     row.names = F,
                                                                     quote = F))})
   
-  # vector including all missed responses
-  # these can just be limited to the trials that showed no response + their onsets. Not a full vector. 
-  lapply(Data, function(data) {sub <- unique(data$SubjID); 
-                                data %>% 
-                                  mutate(noResp = ifelse(response == "NoResp", 1, 0),
-                                         towrite = paste(onset,"*", noResp, sep = "")) %>%
-                                  select(Run, towrite) %>%
-                                  unstack(towrite~Run) %>% 
-                                  t() %>% 
-                                  as.data.frame() %>%
-                                  write_tsv(., paste(sub, "_noResponse", "_AFNI.tsv", sep = ""), col_names = F)})
   
   # for RTs
   lapply(Data, function(data) {sub <- unique(data$SubjID); 
+  data %>% 
+    mutate(RT = round(scale(RT, center = T, scale = F), digits = 3),
+           towrite = paste(onset,"*", RT, sep = "")) %>%
+    select(Run, towrite) %>%
+    unstack(towrite~Run) %>% 
+    lapply(., function(x) write.table(t(noquote(x)), 
+                                      paste(sub, "_RT_AFNI.tsv", sep = ""), 
+                                      append = T, 
+                                      sep = '\t',
+                                      col.names = F,
+                                      row.names = F,
+                                      quote = F))})
+
+  
+  # vector including all missed responses
+  # these can just be limited to the trials that showed no response + their onsets. Not a full vector.
+  # get the subjects with and without no responses
+  subjList <- unique(do.call(rbind, Data)$SubjID)
+  noResponse_subs <- unique(do.call(rbind, Data2)$SubjID)
+  rest <- subjList[!(subjList %in% noResponse_subs)]
+  
+  # for the subjects with no-responses
+  lapply(Data2, function(data) {sub <- unique(data$SubjID); 
                                 data %>% 
-                                  mutate(RT = round(scale(RT, center = T, scale = F), digits = 3),
-                                         towrite = paste(onset,"*", RT, sep = "")) %>%
-                                  select(Run, towrite) %>%
-                                  unstack(towrite~Run) %>% 
-                                  t() %>% 
-                                  as.data.frame() %>%
-                                  lapply(., function(x) write.table(t(noquote(x)), 
-                                                                    paste(sub, "_RT", "_AFNI.tsv", sep = ""), 
+                                  select(Run, onset) %>%
+                                  right_join(tibble(Run = c("01", "02", "03", "04"))) %>%
+                                  replace(., is.na(.), "*") %>%
+                                  unstack(onset~Run) %>%
+                                  lapply(., function(x) write.table(t(x), 
+                                                                    paste(sub, "_noResponse_AFNI.tsv", sep = ""), 
                                                                     append = T, 
                                                                     sep = '\t',
                                                                     col.names = F,
                                                                     row.names = F,
                                                                     quote = F))})
+  # for the rest
+  for (sub in rest) {
+    lapply(rep("*", 4), function(x) write.table(x, 
+                                                paste(sub, "_noResponse_AFNI.tsv", sep = ""), 
+                                                append = T, 
+                                                sep = '\t',
+                                                col.names = F,
+                                                row.names = F,
+                                                quote = F))
+  }
+  
 }
 
 
