@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 # apply 3 mm smoothing to time series data for one subject
 # conversion: FWHM = sigma * 2 * sqrt(2 * log(2))
@@ -6,6 +6,7 @@
 
 # load modules within SCC
 module load fsl
+module list
 
 ID=$1
 
