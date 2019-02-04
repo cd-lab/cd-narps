@@ -14,7 +14,7 @@ toRemove <- read_csv('../removedsubs.csv')
 
 # Load the data
 files <- dir(pattern = "*events.tsv")
-Data <- data_frame(SubjID = files) %>% 
+Data <- tibble(SubjID = files) %>% 
   mutate(contents = map(SubjID, ~ read_tsv(., col_types = cols())),
          Run = substring(SubjID, 22, 23),
          SubjID = substring(SubjID, 1, 7)) %>%

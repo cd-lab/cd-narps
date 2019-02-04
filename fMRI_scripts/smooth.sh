@@ -20,6 +20,10 @@ for RUN in 01 02 03 04 ; do
 
   MASK=output/mask_union.nii.gz
 
+  echo $INPUT
+  echo $OUTPUT
+  echo $MASK
+  
   fslmaths $INPUT -mas $MASK -kernel gauss 1.274 -fmean $OUTPUT
 
 done
