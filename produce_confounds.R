@@ -7,7 +7,6 @@ library(tidyverse)
 fwdThresh <- 0.5
 FSL <- FALSE
 AFNI <- T
-spread <- T
 
 # confounds of interest (COI)
 COI <- c("X", 
@@ -79,26 +78,8 @@ if (FSL) {
   })})
 }
 
-# for AFNI
-if (AFNI) {
-  for (data in confounds) {
-    sub <- unique(data$SubjID)
-    tdata <- data %>% select(COI, -FramewiseDisplacement)
-    if ("FramewiseDisplacement" %in% COI) {
-      nDisp <- which(data["FramewiseDisplacement"] > fwdThresh)
-      for (i in nDisp[-1]) {
-        vec <- rep(0, nrow(data))
-        vec[c(i-1, i, i+1)] <- 1
-        tdata <- cbind(tdata, vec)
-        colnames(tdata)[ncol(tdata)] <- paste("FWD", i, sep = "")
-      }
-    }
-    write_tsv(tdata, paste(sub, "_AFNI_confounds.tsv", sep = ""), col_names = F)
-  }
-}
-
 # for AFNI with run-specific columns (as of 1/31/19)
-if (AFNI & spread) {
+if (AFNI) {
   # function to generate the spread per variable
   sepRuns <- function(data, run) {
     data_frame(run, data) %>% 
@@ -108,25 +89,24 @@ if (AFNI & spread) {
       replace(., is.na(.), 0)
   }
   
-  # iterate through subjects
+  # iterate through subjects and collect most confounds
   for (data in confounds) {
     sub <- unique(data$SubjID)
     run <- data$Run
     tdata <- data %>% select(COI, -FramewiseDisplacement)
     final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
-    if ("FramewiseDisplacement" %in% COI) {
-      nDisp <- which((data["FramewiseDisplacement"] > fwdThresh) & (data["FramewiseDisplacement"] != "n/a"))
-      if (length(nDisp) > 0) {
-        for (i in nDisp) {
-          vec <- rep(0, nrow(data))
-          vec[c(i-1, i, i+1)] <- 1
-          final <- cbind(final, vec)
-          colnames(final)[ncol(final)] <- paste("FWD", i, sep = "")
-        }
-      }
-    }
     #final <- do.call(cbind, apply(tdata, 2, sepRuns, run = run))
     write_tsv(final, paste(sub, "_AFNI_confounds_spread.tsv", sep = ""), col_names = F)
+  }
+  
+  # and then write a separate vector of FWD values to be censored (censor = 0)
+  if ("FramewiseDisplacement" %in% COI) {
+    do.call(rbind, confounds) %>%
+      group_by(SubjID, Run) %>%
+      mutate(FWD = ifelse(FramewiseDisplacement > fwdThresh, 0, 1),
+             FWD = FWD * c(rep(0,3), rep(1, length(FWD) - 3))) %>% # create the FWD thresholded vector, then multiply the first 3 volumes by 0
+      group_by(SubjID) %>% 
+      do(write_tsv(as.data.frame(.$FWD), paste(unique(.$SubjID), "AFNI_FWD.tsv", sep = ""), col_names = F))
   }
 }
 
