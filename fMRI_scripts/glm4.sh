@@ -6,7 +6,7 @@
 module load afni
 module list
 
-GLM_IDX=003
+GLM_IDX=004
 ID=$1
 
 DATADIR=../data_smoothed
@@ -14,6 +14,7 @@ DATAHEAD=${DATADIR}/sub-${ID}
 DATATAIL=sm3mm.nii.gz
 MASK=output/mask_union.nii.gz
 CONFOUNDS=../processed_confounds/sub-${ID}_AFNI_confounds_spread.tsv
+FWD=../processed_confounds/sub-${ID}_AFNI_FWD.tsv 
 ST_RT=../processed_eventfiles/sub-${ID}_RT_AFNI.tsv
 ST_GAIN=../processed_eventfiles/sub-${ID}_gain_AFNI.tsv
 ST_LOSS=../processed_eventfiles/sub-${ID}_loss_AFNI.tsv
@@ -39,7 +40,7 @@ if [ $CHECK_NORESP -eq 4 ]; then
     -stim_label 3 loss -stim_times_AM1 3 $ST_LOSS 'UBLOCK(4)' \
     -allzero_OK \
     -GOFORIT 4 \
-    -CENSORTR *:0-2 \
+    -censor $FWD \
     -bucket ${OUTPUTTAG}.nii.gz -tout -x1D $OUTPUTTAG
 
 else 
@@ -60,7 +61,7 @@ else
     -stim_label 4 noResp -stim_times_IM 4 $ST_NORESP 'UBLOCK(4)' \
     -allzero_OK \
     -GOFORIT 4 \
-    -CENSORTR *:0-2 \
+    -censor $FWD \
     -bucket ${OUTPUTTAG}.nii.gz -tout -x1D $OUTPUTTAG
 
 fi
