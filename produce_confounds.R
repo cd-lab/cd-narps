@@ -106,7 +106,7 @@ if (AFNI) {
       mutate(FWD = ifelse(FramewiseDisplacement > fwdThresh, 0, 1),
              FWD = FWD * c(rep(0,3), rep(1, length(FWD) - 3))) %>% # create the FWD thresholded vector, then multiply the first 3 volumes by 0
       group_by(SubjID) %>% 
-      do(write_tsv(as.data.frame(.$FWD), paste(unique(.$SubjID), "AFNI_FWD.tsv", sep = ""), col_names = F))
+      do(write_tsv(as.data.frame(.$FWD), paste(unique(.$SubjID), "_AFNI_FWD.tsv", sep = ""), col_names = F))
   }
 }
 
