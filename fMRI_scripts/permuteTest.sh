@@ -13,7 +13,7 @@ echo "Processing analysis ${ID}..."
 
 # perform one-sample t-test
 # -x indicates to output both correct and uncorrected maps
-randomise -i $INPUT -o $OUTPUT -1 -x -F 10.69 -m $MASK -v 5
+randomise -i $INPUT -o $OUTPUT -1 -x -S 10.69 -m $MASK -v 5
 
 
 echo "Done."
