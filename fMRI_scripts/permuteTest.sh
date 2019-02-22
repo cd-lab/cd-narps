@@ -14,7 +14,7 @@ echo "Processing analysis ${ID}..."
 
 # perform one-sample t-test
 # -x indicates to output both correct and uncorrected maps
-randomise -i $INPUT -o $OUTPUT -S 10.69 -m $MASK -v 5 -d design_${GROUP}.mat -t design.con -f design.fts -x 
+randomise -i $INPUT -o $OUTPUT -C 1.67 -m $MASK -v 5 -d design_${GROUP}.mat -t design.con -x -R -N -P
 
 
 echo "Done."
