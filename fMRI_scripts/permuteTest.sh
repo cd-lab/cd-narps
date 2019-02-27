@@ -4,7 +4,9 @@
 module load fsl
 module list
 
-ID=$1
+ID=$1 # dir name that contains the data and design files
+THRESH=${2:-1.97} # threshold for clustermass (defaults to 1.97)
+
 GROUP=$(echo $ID | cut -f 2 -d "_")
 INPUT=${ID}/glm04_4D_sm4mm_mask85_${ID}.nii.gz
 OUTPUT=${ID}/glm04_sm4mm_mask85_oneSamp_${ID}
@@ -15,7 +17,7 @@ CONTRAST=${ID}/contrast.con
 echo "Processing analysis ${ID}..."
 
 # perform the permutation test
-randomise -i $INPUT -o $OUTPUT -m $MASK -d $DESIGN -t $CONTRAST -x -R -N -P -C 1.67 -v 5
+randomise -i $INPUT -o $OUTPUT -m $MASK -d $DESIGN -t $CONTRAST -x -R -N -P -C $THRESH -v 5
 
 
 echo "Done."
