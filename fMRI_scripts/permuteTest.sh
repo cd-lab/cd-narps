@@ -9,12 +9,13 @@ GROUP=$(echo $ID | cut -f 2 -d "_")
 INPUT=${ID}/glm04_4D_sm4mm_mask85_${ID}.nii.gz
 OUTPUT=${ID}/glm04_sm4mm_mask85_oneSamp_${ID}
 MASK=mask_thresh_85.nii.gz
+DESIGN=${ID}/design.mat
+CONTRAST=${ID}/contrast.con
 
 echo "Processing analysis ${ID}..."
 
-# perform one-sample t-test
-# -x indicates to output both correct and uncorrected maps
-randomise -i $INPUT -o $OUTPUT -C 1.67 -m $MASK -v 5 -d design_${GROUP}.mat -t design.con -x -R -N -P
+# perform the permutation test
+randomise -i $INPUT -o $OUTPUT -m $MASK -d $DESIGN -t $CONTRAST -x -R -N -P -C 1.67 -v 5
 
 
 echo "Done."
