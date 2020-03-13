@@ -96,8 +96,15 @@ ggplot(data = choiceCoeffs, aes(gain_L2, loss_L2, fill = group)) +
   geom_abline(intercept = 0, slope = -1, lty = 2) +
   geom_hline(yintercept = 0, lty = 2) +
   geom_vline(xintercept = 0, lty = 2) +
-  labs(title = "L2-regularized logistic regression betas for gain and losses per participant") +
-  theme_classic()
+  scale_fill_discrete(labels = c("Equal Indifference", "Equal Range")) +
+  labs(x = "Coefficient for Gains", y = "Coefficient for Losses", fill= "Group") +
+  theme(legend.position = c(0.8, 0.8),
+        legend.key = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        text = element_text(size = 16))
 
 
 ###-------- Replicating the RT and proportion heatmaps ------

@@ -2,3 +2,4 @@
 *.tsv
 event_tsvs/.Rhistory
 event_tsvs/confounds/.Rhistory
+.Rhistory
